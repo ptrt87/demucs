@@ -23,6 +23,7 @@ const stages = [
   "Separating audio...",
   "Checking background noise...",
   "Removing noise...",
+  "Checking bleed and artifacts...",
   "Enhancing audio...",
   "Finalizing files..."
 ];

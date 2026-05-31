@@ -16,6 +16,8 @@ ProgressCallback = Callable[[str, float], None]
 
 
 DEFAULT_MODEL = "htdemucs_ft"
+DEFAULT_SHIFTS = 4
+DEFAULT_OVERLAP = 0.50
 
 
 @dataclass
@@ -37,9 +39,10 @@ def separate_and_enhance(
 
     model_name = os.environ.get("DEMUCS_WEB_MODEL", DEFAULT_MODEL)
     device = os.environ.get("DEMUCS_WEB_DEVICE") or ("cuda" if torch.cuda.is_available() else "cpu")
-    shifts = _env_int("DEMUCS_WEB_SHIFTS", 1)
+    shifts = _env_int("DEMUCS_WEB_SHIFTS", DEFAULT_SHIFTS)
     jobs = _env_int("DEMUCS_WEB_JOBS", 0)
     segment = _env_int("DEMUCS_WEB_SEGMENT", 0) or None
+    overlap = _env_float("DEMUCS_WEB_OVERLAP", DEFAULT_OVERLAP)
 
     progress("Separating audio...", 0.08)
     separator = Separator(
@@ -47,7 +50,7 @@ def separate_and_enhance(
         device=device,
         shifts=shifts,
         split=True,
-        overlap=0.25,
+        overlap=overlap,
         segment=segment,
         jobs=jobs,
         progress=False,
@@ -68,10 +71,12 @@ def separate_and_enhance(
     vocals = stems["vocals"].detach().cpu().float()
     instrumental = _build_instrumental(origin.detach().cpu().float(), stems)
 
-    progress("Checking background noise...", 0.62)
-    progress("Removing noise...", 0.72)
-    progress("Enhancing audio...", 0.84)
-    vocals, instrumental, analysis = cleanup_stems(vocals, instrumental, separator.samplerate)
+    vocals, instrumental, analysis = cleanup_stems(
+        vocals,
+        instrumental,
+        separator.samplerate,
+        progress=progress,
+    )
 
     progress("Finalizing files...", 0.94)
     vocals_path = output_dir / "vocals.wav"
@@ -104,6 +109,16 @@ def _env_int(name: str, default: int) -> int:
         return default
     try:
         return int(value)
+    except ValueError:
+        return default
+
+
+def _env_float(name: str, default: float) -> float:
+    value = os.environ.get(name)
+    if not value:
+        return default
+    try:
+        return float(value)
     except ValueError:
         return default
 

@@ -207,20 +207,22 @@ Then open `http://127.0.0.1:8765`. The app accepts `mp3`, `wav`, `flac`, and `m4
 If `torch` or `torchaudio` is missing, the app still starts, but processing will show a clear install
 message instead of failing with a raw Python import error.
 
-By default the app uses `htdemucs_ft`, the fine-tuned Hybrid Transformer Demucs model, because it is
-the highest-quality built-in Demucs vocal separation option here. You can tune runtime without changing
-code:
+By default the app uses `htdemucs_ft`, the fine-tuned Hybrid Transformer Demucs model, with 4 shift
+passes and 50% segment overlap for a slower max-quality extraction. You can tune runtime without
+changing code:
 
 ```bash
 DEMUCS_WEB_MODEL=htdemucs python -m demucs_app
 DEMUCS_WEB_DEVICE=cpu python -m demucs_app
-DEMUCS_WEB_SHIFTS=2 python -m demucs_app
+DEMUCS_WEB_SHIFTS=1 python -m demucs_app
+DEMUCS_WEB_OVERLAP=0.25 python -m demucs_app
 ```
 
-After separation, the app performs a conservative triple-check cleanup pass: it measures noise, hiss,
-hum, muffled sound, and artifacts; applies light denoise to both stems; then enhances clarity and
-normalizes safely. Any cleanup candidate that measures worse or changes the stem too aggressively is
-discarded automatically.
+After separation, the app performs a conservative max-quality cleanup pass: it measures noise, hiss,
+hum, muffled sound, and artifacts; applies adaptive two-window denoise; checks and reduces leftover
+stem bleed; restores the local loudness envelope to avoid pumping or weird volume dips; then enhances
+clarity and normalizes safely. Any cleanup candidate that measures worse or changes the stem too
+aggressively is discarded automatically.
 
 ### Graphical Interface
 
