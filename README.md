@@ -104,13 +104,35 @@ for more details.
 
 ## Requirements
 
-You will need at least Python 3.8. See `requirements_minimal.txt` for requirements for separation only,
-and `environment-[cpu|cuda].yml` (or `requirements.txt`) if you want to train a new model.
+The original Demucs package supports Python 3.8+, but the local vocal remover web app requires and is
+tested with Python 3.10. Use a Python 3.10 virtual environment for the cleanest Windows install.
+See `requirements_minimal.txt` for requirements for separation only, and `environment-[cpu|cuda].yml`
+(or `requirements.txt`) if you want to train a new model.
 
 ### For Windows users
 
-Everytime you see `python3`, replace it with `python.exe`. You should always run commands from the
-Anaconda console.
+Use Python 3.10. Every time you see `python3`, replace it with `python.exe`. You should always run
+commands from the Anaconda console, PowerShell, or Command Prompt after activating your environment.
+Check the active interpreter first:
+
+```bash
+python --version
+```
+
+For the local vocal remover app, install the tested PyTorch stack before running the app:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install torch==2.0.1 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -e .
+```
+
+If you have an NVIDIA GPU and want the CUDA 11.8 build, use this PyTorch command instead of the CPU
+line:
+
+```bash
+python -m pip install torch==2.0.1 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+```
 
 ### For musicians
 
@@ -164,6 +186,41 @@ but it will allow you to use Demucs without installing anything.
 ### Web Demo
 
 Integrated to [Hugging Face Spaces](https://huggingface.co/spaces) with [Gradio](https://github.com/gradio-app/gradio). See demo: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/akhaliq/demucs)
+
+### Local Vocal Remover Web App
+
+This fork also includes a small local web app for a normal two-stem vocal remover workflow.
+It keeps the original Demucs CLI intact and runs the same `Separator` API behind a polished upload,
+progress, cleanup, and download interface.
+
+Use Python 3.10 and install the Windows PyTorch packages from the Windows section above. From the
+repository root:
+
+```bash
+python -m pip install -e .
+python -m demucs_app --host 127.0.0.1 --port 8765
+```
+
+Then open `http://127.0.0.1:8765`. The app accepts `mp3`, `wav`, `flac`, and `m4a` files and exports
+`vocals.wav` and `instrumental.wav`.
+
+If `torch` or `torchaudio` is missing, the app still starts, but processing will show a clear install
+message instead of failing with a raw Python import error.
+
+By default the app uses `htdemucs_ft`, the fine-tuned Hybrid Transformer Demucs model, because it is
+the highest-quality built-in Demucs vocal separation option here. You can tune runtime without changing
+code:
+
+```bash
+DEMUCS_WEB_MODEL=htdemucs python -m demucs_app
+DEMUCS_WEB_DEVICE=cpu python -m demucs_app
+DEMUCS_WEB_SHIFTS=2 python -m demucs_app
+```
+
+After separation, the app performs a conservative triple-check cleanup pass: it measures noise, hiss,
+hum, muffled sound, and artifacts; applies light denoise to both stems; then enhances clarity and
+normalizes safely. Any cleanup candidate that measures worse or changes the stem too aggressively is
+discarded automatically.
 
 ### Graphical Interface
 

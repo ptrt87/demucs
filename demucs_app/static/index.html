@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Demucs Vocal Remover</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar" aria-label="App header">
+        <div>
+          <p class="eyebrow">Demucs web workflow</p>
+          <h1>Vocal Remover</h1>
+        </div>
+        <div class="model-pill">HT Demucs fine-tuned</div>
+      </section>
+
+      <section class="workspace">
+        <div class="upload-panel">
+          <label id="dropZone" class="drop-zone" for="audioInput">
+            <input id="audioInput" type="file" accept=".mp3,.wav,.flac,.m4a,audio/*">
+            <span class="drop-kicker">Drop audio here</span>
+            <span class="drop-title">Choose an mp3, wav, flac, or m4a file</span>
+            <span id="fileName" class="file-name">No file selected</span>
+          </label>
+
+          <div class="wave-wrap">
+            <canvas id="waveCanvas" width="900" height="220" aria-label="Audio waveform preview"></canvas>
+          </div>
+
+          <div class="actions">
+            <button id="processButton" class="primary" type="button" disabled>Separate vocals</button>
+            <button id="resetButton" class="secondary" type="button">Start Over</button>
+          </div>
+
+          <div class="progress-block" aria-live="polite">
+            <div class="progress-label">
+              <span id="uploadLabel">Upload progress</span>
+              <span id="uploadPercent">0%</span>
+            </div>
+            <div class="progress-track"><span id="uploadBar"></span></div>
+          </div>
+        </div>
+
+        <aside class="status-panel">
+          <div class="status-header">
+            <p class="eyebrow">Processing</p>
+            <strong id="statusText">Waiting for audio</strong>
+          </div>
+
+          <div class="progress-block">
+            <div class="progress-label">
+              <span>Overall progress</span>
+              <span id="processPercent">0%</span>
+            </div>
+            <div class="progress-track"><span id="processBar"></span></div>
+          </div>
+
+          <ol class="stage-list" id="stageList">
+            <li data-stage="Separating audio...">Separating audio...</li>
+            <li data-stage="Checking background noise...">Checking background noise...</li>
+            <li data-stage="Removing noise...">Removing noise...</li>
+            <li data-stage="Enhancing audio...">Enhancing audio...</li>
+            <li data-stage="Finalizing files...">Finalizing files...</li>
+          </ol>
+
+          <div class="downloads" id="downloads">
+            <a id="vocalsDownload" class="download-button disabled" href="#" download>Download vocals.wav</a>
+            <a id="instrumentalDownload" class="download-button disabled" href="#" download>Download instrumental.wav</a>
+          </div>
+
+          <p id="errorBox" class="error-box" hidden></p>
+        </aside>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

@@ -55,14 +55,20 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=['demucs'],
+    packages=['demucs', 'demucs_app'],
+    package_data={
+        'demucs_app': ['static/*'],
+    },
     extras_require={
         'dev': ALL_REQUIRED,
     },
     install_requires=REQUIRED,
     include_package_data=True,
     entry_points={
-        'console_scripts': ['demucs=demucs.separate:main'],
+        'console_scripts': [
+            'demucs=demucs.separate:main',
+            'demucs-web=demucs_app.server:main',
+        ],
     },
     license='MIT License',
     classifiers=[
