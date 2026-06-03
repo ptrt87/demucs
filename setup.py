@@ -8,7 +8,7 @@
 
 from pathlib import Path
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 NAME = 'demucs'
@@ -55,12 +55,14 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=['demucs', 'demucs_app'],
+    packages=find_packages(include=['demucs', 'demucs.*', 'demucs_app', 'demucs_app.*']),
     package_data={
         'demucs_app': ['static/*'],
     },
     extras_require={
         'dev': ALL_REQUIRED,
+        'uvr': ['audio-separator[cpu]>=0.44.2', 'soundfile>=0.12'],
+        'uvr-gpu': ['audio-separator[gpu]>=0.44.2', 'soundfile>=0.12'],
     },
     install_requires=REQUIRED,
     include_package_data=True,

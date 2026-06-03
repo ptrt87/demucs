@@ -119,19 +119,22 @@ Check the active interpreter first:
 python --version
 ```
 
-For the local vocal remover app, install the tested PyTorch stack before running the app:
+For the local UVR vocal remover app, install the tested PyTorch stack, the UVR runtime, and FFmpeg.
+FFmpeg must be available as `ffmpeg.exe` on `PATH`.
 
 ```bash
 python -m pip install --upgrade pip
 python -m pip install torch==2.0.1 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+python -m pip install "audio-separator[cpu]>=0.44.2" soundfile
 python -m pip install -e .
 ```
 
 If you have an NVIDIA GPU and want the CUDA 11.8 build, use this PyTorch command instead of the CPU
-line:
+line, then install the GPU UVR extra:
 
 ```bash
 python -m pip install torch==2.0.1 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+python -m pip install "audio-separator[gpu]>=0.44.2" soundfile
 ```
 
 ### For musicians
@@ -190,39 +193,43 @@ Integrated to [Hugging Face Spaces](https://huggingface.co/spaces) with [Gradio]
 ### Local Vocal Remover Web App
 
 This fork also includes a small local web app for a normal two-stem vocal remover workflow.
-It keeps the original Demucs CLI intact and runs the same `Separator` API behind a polished upload,
-progress, cleanup, and download interface.
+It keeps the original Demucs CLI intact, but the web app now runs Ultimate Vocal Remover models through
+the `audio-separator` Python API behind a polished upload, progress, cleanup, and download interface.
 
-Use Python 3.10 and install the Windows PyTorch packages from the Windows section above. From the
-repository root:
+Use Python 3.10 and install the Windows UVR packages from the Windows section above. From the repository
+root:
 
 ```bash
 python -m pip install -e .
-python -m demucs_app --host 127.0.0.1 --port 8765
+python -m demucs_app --host 127.0.0.1 --port 8766
 ```
 
-Then open `http://127.0.0.1:8765`. The app accepts `mp3`, `wav`, `flac`, and `m4a` files and exports
+Then open `http://127.0.0.1:8766`. The app accepts `mp3`, `wav`, `flac`, and `m4a` files and exports
 `vocals.wav` and `instrumental.wav`.
 
-If `torch` or `torchaudio` is missing, the app still starts, but processing will show a clear install
-message instead of failing with a raw Python import error.
+If `audio-separator`, `torch`, `soundfile`, or FFmpeg is missing, the app still starts, but processing
+will show a clear install message instead of failing with a raw Python import error.
 
-By default the app uses `htdemucs_ft`, the fine-tuned Hybrid Transformer Demucs model, with 4 shift
-passes and 50% segment overlap for a slower max-quality extraction. You can tune runtime without
-changing code:
+By default the app uses the UVR model `model_bs_roformer_ep_317_sdr_12.9755.ckpt`, a high-scoring
+RoFormer vocal/instrumental model supported by `audio-separator`. The model is downloaded automatically
+on first use. If your machine cannot download models during processing, pre-download the model and set
+`UVR_MODEL_DIR` to that folder.
+
+Power users can tune the UVR backend without changing code:
 
 ```bash
-DEMUCS_WEB_MODEL=htdemucs python -m demucs_app
-DEMUCS_WEB_DEVICE=cpu python -m demucs_app
-DEMUCS_WEB_SHIFTS=1 python -m demucs_app
-DEMUCS_WEB_OVERLAP=0.25 python -m demucs_app
+$env:UVR_MODEL_FILENAME="model_bs_roformer_ep_317_sdr_12.9755.ckpt"
+$env:UVR_MODEL_DIR="C:\uvr-models"
+$env:UVR_ENSEMBLE_PRESET="vocal_clean"
+$env:UVR_MDXC_OVERLAP="16"
+python -m demucs_app --host 127.0.0.1 --port 8766
 ```
 
 After separation, the app performs a conservative max-quality cleanup pass: it measures noise, hiss,
 hum, muffled sound, and artifacts; applies adaptive two-window denoise; checks and reduces leftover
-stem bleed; restores the local loudness envelope to avoid pumping or weird volume dips; then enhances
-clarity and normalizes safely. Any cleanup candidate that measures worse or changes the stem too
-aggressively is discarded automatically.
+stem bleed; restores the local loudness envelope with a slower, gentler gain curve to avoid pumping or
+weird volume dips; then enhances clarity and normalizes safely. Any cleanup candidate that measures
+worse or changes the stem too aggressively is discarded automatically.
 
 ### Graphical Interface
 

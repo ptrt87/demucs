@@ -22,7 +22,7 @@ ALLOWED_EXTENSIONS = {".mp3", ".wav", ".flac", ".m4a"}
 MAX_UPLOAD_BYTES = 500 * 1024 * 1024
 JOB_TTL_SECONDS = 12 * 60 * 60
 STATIC_DIR = Path(__file__).parent / "static"
-WORK_ROOT = Path(tempfile.gettempdir()) / "demucs_web_jobs"
+WORK_ROOT = Path(tempfile.gettempdir()) / "uvr_web_jobs"
 
 
 @dataclass
@@ -112,7 +112,7 @@ STORE = JobStore()
 
 
 class DemucsAppHandler(BaseHTTPRequestHandler):
-    server_version = "DemucsApp/0.1"
+    server_version = "UVRVocalRemover/0.2"
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
@@ -281,7 +281,7 @@ def _run_job(job_id: str) -> None:
 
         from .pipeline import separate_and_enhance
 
-        STORE.update(job_id, status="processing", stage="Separating audio...", progress=0.03)
+        STORE.update(job_id, status="processing", stage="Separating with Ultimate Vocal Remover...", progress=0.03)
         separate_and_enhance(job.upload_path, job.directory, progress=update)
         STORE.update(job_id, status="complete", stage="Ready to download.", progress=1.0)
     except ModuleNotFoundError as exc:
@@ -300,6 +300,9 @@ def _run_job(job_id: str) -> None:
             job.upload_path.unlink(missing_ok=True)
         except OSError:
             pass
+        current = STORE.get(job_id)
+        if current and current.status == "failed":
+            shutil.rmtree(current.directory, ignore_errors=True)
 
 
 def _safe_filename(filename: str) -> str:
@@ -323,12 +326,12 @@ def _static_path(fragment: str) -> Path | None:
     return None
 
 
-def serve(host: str = "127.0.0.1", port: int = 8765) -> None:
+def serve(host: str = "127.0.0.1", port: int = 8766) -> None:
     missing = missing_runtime_packages()
     if missing:
         print(format_missing_dependency_error(missing), flush=True)
     httpd = ThreadingHTTPServer((host, port), DemucsAppHandler)
-    print(f"Demucs web app running at http://{host}:{port}", flush=True)
+    print(f"UVR vocal remover web app running at http://{host}:{port}", flush=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
@@ -338,8 +341,8 @@ def serve(host: str = "127.0.0.1", port: int = 8765) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run the Demucs vocal remover web app.")
+    parser = argparse.ArgumentParser(description="Run the UVR vocal remover web app.")
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", default=8765, type=int)
+    parser.add_argument("--port", default=8766, type=int)
     args = parser.parse_args()
     serve(args.host, args.port)

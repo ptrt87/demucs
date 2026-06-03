@@ -20,10 +20,9 @@ let currentJobId = null;
 let pollTimer = null;
 
 const stages = [
-  "Separating audio...",
+  "Separating with Ultimate Vocal Remover...",
   "Checking background noise...",
   "Removing noise...",
-  "Checking bleed and artifacts...",
   "Enhancing audio...",
   "Finalizing files..."
 ];

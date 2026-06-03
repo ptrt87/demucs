@@ -123,7 +123,7 @@ def cleanup_stems(
         preserve_envelope=True,
     )
 
-    progress("Checking bleed and artifacts...", 0.78)
+    progress("Removing noise...", 0.78)
     vocal_analysis = analyze_stem(vocals, samplerate)
     inst_analysis = analyze_stem(instrumental, samplerate)
     bleed_reduced_vocals = _reduce_cross_bleed(
@@ -428,7 +428,7 @@ def _preserve_loudness_envelope(
     original: torch.Tensor,
     candidate: torch.Tensor,
     samplerate: int,
-    max_gain_db: float = 2.0,
+    max_gain_db: float = 1.25,
 ) -> torch.Tensor:
     original = _as_float_audio(original)
     candidate = _match_shape(_as_float_audio(candidate), original)
@@ -450,7 +450,7 @@ def _preserve_loudness_envelope(
 
 def _rms_envelope(wav: torch.Tensor, samplerate: int) -> torch.Tensor:
     mono = wav.mean(dim=0, keepdim=True)
-    window = max(512, int(samplerate * 0.30))
+    window = max(512, int(samplerate * 0.45))
     if window % 2 == 0:
         window += 1
     padded = _pad_envelope_input(mono.square()[None], window)
@@ -459,7 +459,7 @@ def _rms_envelope(wav: torch.Tensor, samplerate: int) -> torch.Tensor:
 
 
 def _smooth_gain_curve(gain: torch.Tensor, samplerate: int) -> torch.Tensor:
-    window = max(256, int(samplerate * 0.70))
+    window = max(256, int(samplerate * 1.20))
     if window % 2 == 0:
         window += 1
     mono_gain = gain.mean(dim=0, keepdim=True)
